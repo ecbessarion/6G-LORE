@@ -1,0 +1,17 @@
+services:
+  gui:
+    build:
+      context: ../../GUI
+      dockerfile: ./Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../../GUI:/app
+      - HOST_SSH_DIR:/CONTAINER_USER_HOME/.ssh:ro  # Mount user's SSH directory into the container (read-only) for secure access to SSH keys
+
+    env_file:
+      - ../../GUI/.env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: unless-stopped

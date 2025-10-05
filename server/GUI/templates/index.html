@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LoRa Traffic Scenario</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">6G-LORE Testbed</a>
+      <div class="d-flex ms-auto">
+        <a 
+          id="real-time-btn"
+          href="#"
+          class="btn btn-outline-info me-2"
+          target="_blank"
+          style="display:none;"
+        >
+          📈 Real-Time Measurements
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger fw-bold text-white">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Form -->
+  <div class="container py-5">
+    <h1 class="mb-4 text-center text-primary">6G-LORE Testbed</h1>
+
+    <form method="GET" action="/results" class="mx-auto" style="max-width: 480px;">
+      <!-- Node Dropdown -->
+      <div class="mb-3">
+        <label for="node" class="form-label">Select Node</label>
+        <select class="form-select" id="node" name="node" required>
+          <option value="" disabled selected>-- Select Node --</option>
+          {% for ip, node_data in nodes.items() %}
+            <option value="{{ ip }}">{{ node_data.name2 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <!-- Mode Selector -->
+      <div class="mb-3">
+        <label for="mode" class="form-label">Mode (LoRa, 5G)</label>
+        <select class="form-select" id="mode" name="mode" required>
+          <option value="" disabled selected>-- Select Mode --</option>
+        </select>
+      </div>
+
+      <!-- Message Count -->
+      <div class="mb-3">
+        <label for="r" class="form-label">Number of Messages</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          id="r" 
+          name="r" 
+          min="0" 
+          max="100" 
+          value="1" 
+          required 
+        />
+      </div>
+
+      <!-- Message Size -->
+      <div class="mb-3">
+        <label for="s" class="form-label">Message Size (bytes)</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          id="s" 
+          name="s" 
+          min="0" 
+          value="10" 
+          required 
+          pattern="\d*" 
+          inputmode="numeric"
+        />
+      </div>
+
+      <!-- Duration -->
+      <div class="mb-3">
+        <label for="d" class="form-label">Duration/Period (e.g. 30s or 2m)</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="d" 
+          name="d" 
+          value="30s" 
+          required 
+        />
+      </div>
+
+      <!-- Periods -->
+      <div class="mb-3">
+        <label for="p" class="form-label">Periods</label>
+        <input 
+          type="number" 
+          class="form-control" 
+          id="p" 
+          name="p" 
+          min="1" 
+          max="100" 
+          value="1" 
+          required 
+        />
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary w-100">Run Scenario</button>
+    </form>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const nodeSelect = document.getElementById("node");
+    const modeSelect = document.getElementById("mode");
+    const realTimeBtn = document.getElementById("real-time-btn");
+    const messageSizeInput = document.getElementById("s");
+    const messageCountInput = document.getElementById("r");
+    const periodsInput = document.getElementById("p");
+    const durationInput = document.getElementById("d");
+
+    // Dashboard URLs
+    const dashboards = {
+      {% for ip, node_data in nodes.items() %}
+      "{{ ip }}": {
+        "lora": "{{ node_data.dashboards.real_time['lora'] }}",
+        "5g": "{{ node_data.dashboards.real_time.get('5g', '') }}"
+      },
+      {% endfor %}
+    };
+
+    const maxMessageSize = {
+      lora: 50,
+      "5g": 1444
+    };
+
+    function updateModeOptions(selectedIp) {
+      const loraOnlyIp1 = "{{ NODE1_IP }}";
+      const loraOnlyIp2 = "{{ NODE2_IP }}";
+      const onlyLoraNodes = [loraOnlyIp1, loraOnlyIp2];
+      modeSelect.innerHTML = '';
+
+      const defaultOption = document.createElement("option");
+      defaultOption.disabled = true;
+      defaultOption.selected = true;
+      defaultOption.textContent = "-- Select Mode --";
+      defaultOption.value = "";
+      modeSelect.appendChild(defaultOption);
+
+      const loraOption = document.createElement("option");
+      loraOption.value = "lora";
+      loraOption.textContent = "LoRa";
+      modeSelect.appendChild(loraOption);
+
+      if (!onlyLoraNodes.includes(selectedIp)) {
+        const g5Option = document.createElement("option");
+        g5Option.value = "5g";
+        g5Option.textContent = "5G";
+        modeSelect.appendChild(g5Option);
+      }
+
+      if (onlyLoraNodes.includes(selectedIp)) {
+        modeSelect.value = "lora";
+        updateRealTimeBtn();
+        updateMessageSizeMax("lora");
+      } else {
+        modeSelect.value = "";
+        updateRealTimeBtn();
+      }
+    }
+
+    function updateRealTimeBtn() {
+      const selectedIp = nodeSelect.value;
+      const selectedMode = modeSelect.value;
+      const lora5gNodeIp = "{{ NODE3_IP }}";
+
+      if (selectedIp === lora5gNodeIp && selectedMode === "lora") {
+        realTimeBtn.style.display = "none";
+        return;
+      }
+
+      if (selectedIp && selectedMode && dashboards[selectedIp]?.[selectedMode]) {
+        realTimeBtn.href = dashboards[selectedIp][selectedMode];
+        realTimeBtn.style.display = "inline-block";
+      } else {
+        realTimeBtn.href = "#";
+        realTimeBtn.style.display = "none";
+      }
+    }
+
+    function updateMessageSizeMax(mode) {
+      const maxVal = maxMessageSize[mode] || 50;
+      messageSizeInput.max = maxVal;
+
+      let val = parseInt(messageSizeInput.value) || 0;
+      if (val > maxVal) {
+        messageSizeInput.value = maxVal;
+      }
+      if (val < 0) {
+        messageSizeInput.value = 0;
+      }
+    }
+
+    nodeSelect.addEventListener("change", () => {
+      updateModeOptions(nodeSelect.value);
+    });
+
+    modeSelect.addEventListener("change", () => {
+      updateRealTimeBtn();
+      updateMessageSizeMax(modeSelect.value);
+    });
+
+    messageSizeInput.addEventListener("input", () => {
+      const maxVal = parseInt(messageSizeInput.max);
+      let val = messageSizeInput.value.replace(/\D/g, '');
+      val = parseInt(val || 0);
+
+      if (val < 0) {
+        messageSizeInput.value = 0;
+      } else if (val > maxVal) {
+        messageSizeInput.value = maxVal;
+      } else {
+        messageSizeInput.value = val;
+      }
+    });
+
+    // Clamp messages: 0–100
+    messageCountInput.addEventListener("input", () => {
+      let val = messageCountInput.value.replace(/\D/g, '');
+      val = parseInt(val || 0);
+      if (val < 0) val = 0;
+      if (val > 100) val = 100;
+      messageCountInput.value = val;
+    });
+
+    // Clamp periods: 1–100
+    periodsInput.addEventListener("input", () => {
+      let val = periodsInput.value.replace(/\D/g, '');
+      val = parseInt(val || 1);
+      if (val < 1) val = 1;
+      if (val > 100) val = 100;
+      periodsInput.value = val;
+    });
+
+    // Clamp duration: 0–120s or 2m
+    durationInput.addEventListener("blur", () => {
+      let val = durationInput.value.trim().toLowerCase();
+      const match = val.match(/^(\d+)(s|m)$/);
+      if (!match) {
+        durationInput.value = "30s";
+        return;
+      }
+
+      let num = parseInt(match[1]);
+      let unit = match[2];
+      let totalSeconds = unit === "s" ? num : num * 60;
+
+      if (totalSeconds < 0) totalSeconds = 0;
+      if (totalSeconds > 120) totalSeconds = 120;
+
+      if (totalSeconds % 60 === 0 && totalSeconds >= 60) {
+        durationInput.value = (totalSeconds / 60) + "m";
+      } else {
+        durationInput.value = totalSeconds + "s";
+      }
+    });
+  </script>
+
+  <!-- Footer -->
+  <footer class="text-center mt-5 mb-3 text-muted">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="Logo" style="max-height: 50px; margin-bottom: 10px;" />
+    <div>© 2025 6G-LORE Testbed. All rights reserved.</div>
+  </footer>
+
+</body>
+</html>
+

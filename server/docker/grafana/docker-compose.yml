@@ -1,0 +1,32 @@
+services:
+  grafana:
+    image: grafana/grafana     
+    container_name: grafana  
+    ports:
+      - '3000:3000'          
+    volumes:
+      - grafana-storage:/var/lib/grafana  
+    environment:
+      - GF_DASHBOARDS_DEFAULT_AUTOREFRESH=1s  
+
+      # --- Keycloak OIDC config for Grafana authentication ---
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true        
+      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak        
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=<client ID>    # OAuth client ID registered in Keycloak
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=...    # OAuth client secret associated with client ID (keep secret)
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid email profile  # OAuth scopes to request user info
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://<keycloak-host>/realms/<realm>/protocol/openid-connect/auth   # OAuth authorization URL
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=https://<keycloak-host>/realms/<realm>/protocol/openid-connect/token # OAuth token endpoint URL
+      - GF_AUTH_GENERIC_OAUTH_API_URL=https://<keycloak-host>/realms/<realm>/protocol/openid-connect/userinfo # OAuth user info endpoint URL
+      - GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_NAME=email    
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true           
+      - GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN=true                
+      - GF_AUTH_DISABLE_LOGIN_FORM=true                      
+      - GF_AUTH_DISABLE_SIGNOUT_MENU=false                  
+      - GF_AUTH_SIGNOUT_REDIRECT_URL=http://<your-host>:3000/login  # URL to redirect after sign out
+      - GF_SERVER_ROOT_URL=http://<your-host>:3000                   # Root URL for Grafana server (used in redirects)
+
+    restart: unless-stopped   
+
+volumes:
+  grafana-storage: {}        

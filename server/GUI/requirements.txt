@@ -1,0 +1,9 @@
+Flask==2.3.3
+werkzeug<3
+gunicorn==21.2.0
+python-dotenv==1.0.1
+paramiko==3.5.1
+Flask-Login==0.6.2
+python-keycloak==5.7.0
+gevent==22.10.2
+eventlet==0.33.3

@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 800ms
+  scrape_timeout: 700ms
+  evaluation_interval: 800ms
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+      scheme: http
+      timeout: 10s
+      api_version: v2
+
+scrape_configs:
+  - job_name: prometheus
+    honor_timestamps: true
+    scrape_interval: 800ms
+    scrape_timeout: 700ms
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name:                     # Unique name for this scrape job, e.g. identifying a group of related targets
+    scrape_interval: 800ms
+    scrape_timeout: 700ms
+    static_configs:
+      - targets:
+          -                       # List of host:port strings for each target to scrape metrics from
+        labels:
+          node:                   # Node label value for this target group
+
+
