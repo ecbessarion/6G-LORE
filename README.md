@@ -1,6 +1,7 @@
-# server_project
+# 6G-LORE server_project
 
-Server application.
+Server application for the monitoring of LoRa networks.
+For the client side please refer to https://github.com/smandon/rdumtool
 
 ## Tech Stack
 - Language: Python
@@ -39,26 +40,10 @@ Server application.
 
 ### Setup & Run
 1. Create and activate a virtual environment
-   - **Windows (PowerShell)**
-     ```powershell
-     py -3 -m venv .venv
-     .\.venv\Scripts\Activate.ps1
-     ```
-   - **macOS/Linux**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
 2. Install dependencies
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the server
-   ```bash
-   python server.py
-   ```
-   *(If your entry point is different, replace `server.py` with the correct file.)*
-
 Environment variables are defined in `.env`. Copy to `.env` and fill in values as needed.
 
 ### Docker
@@ -75,15 +60,11 @@ docker run -p 8080:8080 server_project
 docker compose up --build
 ```
 
-
-## Scripts
-No scripts detected.
-
-## API
-Add your API endpoints here with examples.
-
 ## Testing
-Add test instructions here.
+For testing you will need to configure the parameters of the end-points in the env file.
 
 ## License
-Choose a license (e.g., MIT) and add a `LICENSE` file.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
